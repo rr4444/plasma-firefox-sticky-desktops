@@ -594,7 +594,7 @@ h = json.load(open(os.path.expanduser('$HOST_DIR/tabgroup_helper.json')))
 m = json.load(open(os.path.expanduser('$EXT_DIR/manifest.json')))
 assert os.path.exists(h['path']), 'Binary target does not exist'
 assert m['browser_specific_settings']['gecko']['id'] in h['allowed_extensions'], 'ID mismatch'
-print(f'  [OK] Valid extension manifest v{m["version"]}')
+print('  [OK] Valid extension manifest v' + str(m.get('version', '?')))
 "
 
   echo -e "
