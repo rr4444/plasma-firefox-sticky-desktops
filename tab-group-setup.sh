@@ -364,7 +364,13 @@ EOF
   "browser_specific_settings": {
     "gecko": {
       "id": "$ADDON_ID",
-      "strict_min_version": "102.0"
+      "strict_min_version": "102.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   },
   "icons": {
