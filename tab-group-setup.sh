@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Part of rr4444/plasma-firefox-sticky-desktops
+# GitHub: https://github.com/rr4444/plasma-firefox-sticky-desktops
+# Setup, test harness, and uninstaller for Firefox tab group desktop synchronization
+
 set -euo pipefail
 
 INSTALL_DIR="$HOME/.local/share/tabgroup-helper"
@@ -10,7 +14,7 @@ ICON_URL="https://kde.org/stuff/clipart/logo/plasma-logo-colorful-128x128.png"
 
 show_help() {
   cat << EOF
-Firefox Tab Group Window Manager Bridge
+Firefox Tab Group Window Manager Bridge (rr4444/plasma-firefox-sticky-desktops)
 
 Usage: $(basename "$0") [OPTION]
 
@@ -26,7 +30,7 @@ EOF
 }
 
 do_install() {
-  echo "==> Deploying Firefox Tab Group Integration..."
+  echo "==> Deploying Firefox Tab Group Integration (rr4444/plasma-firefox-sticky-desktops)..."
 
   mkdir -p "$INSTALL_DIR" "$HOST_DIR" "$EXT_DIR"
 
@@ -41,6 +45,10 @@ do_install() {
   # 2. Native Messaging Helper (Python + KWin / GNOME D-Bus Bridge)
   cat > "$INSTALL_DIR/helper.py" << 'PYEOF'
 #!/usr/bin/env python3
+# Part of rr4444/plasma-firefox-sticky-desktops
+# GitHub: https://github.com/rr4444/plasma-firefox-sticky-desktops
+# Native messaging helper bridging Firefox WebExtension events to KWin / GNOME D-Bus
+
 import sys
 import json
 import struct
@@ -331,6 +339,7 @@ PYEOF
   # 3. Native Messaging Host Manifest
   cat > "$HOST_DIR/tabgroup_helper.json" << EOF
 {
+  "homepage_url": "https://github.com/rr4444/plasma-firefox-sticky-desktops",
   "name": "tabgroup_helper",
   "description": "Bridge Firefox tab groups with desktop window managers",
   "path": "$INSTALL_DIR/helper.py",
@@ -342,6 +351,7 @@ EOF
   # 4. Firefox Extension Manifest
   cat > "$EXT_DIR/manifest.json" << EOF
 {
+  "homepage_url": "https://github.com/rr4444/plasma-firefox-sticky-desktops",
   "manifest_version": 3,
   "name": "Tab Group Window Rules Bridge",
   "version": "1.4",
@@ -373,6 +383,10 @@ EOF
 
   # 5. Background Script
   cat > "$EXT_DIR/background.js" << 'JSEOF'
+// Part of rr4444/plasma-firefox-sticky-desktops
+// GitHub: https://github.com/rr4444/plasma-firefox-sticky-desktops
+// Continuously updates Firefox window title prefixes based on active & background tab groups
+
 async function refreshWindowTitle(windowId) {
   if (!windowId || windowId < 0) return;
 
@@ -436,6 +450,10 @@ JSEOF
   # 6. Extension Popup HTML
   cat > "$EXT_DIR/popup.html" << 'EOF'
 <!DOCTYPE html>
+<!--
+  Part of rr4444/plasma-firefox-sticky-desktops
+  GitHub: https://github.com/rr4444/plasma-firefox-sticky-desktops
+-->
 <html>
 <head>
   <meta charset="utf-8">
@@ -547,6 +565,10 @@ EOF
 
   # 7. Extension Popup JS
   cat > "$EXT_DIR/popup.js" << 'JSEOF'
+// Part of rr4444/plasma-firefox-sticky-desktops
+// GitHub: https://github.com/rr4444/plasma-firefox-sticky-desktops
+// Interactive popup UI logic for querying groups and dispatching desktop moves
+
 let port = null;
 let currentWindow = null;
 let windowGroups = [];
@@ -641,9 +663,9 @@ JSEOF
 do_test() {
   echo "================================================================="
   echo "  Firefox Tab Group Bridge - Diagnostic & Test Suite"
+  echo "  Repo: rr4444/plasma-firefox-sticky-desktops"
   echo "================================================================="
 
-  # 1. Environment & Session
   echo -e "\n[1/5] Checking Desktop & Session Environment..."
   echo "  XDG_CURRENT_DESKTOP : ${XDG_CURRENT_DESKTOP:-<unset>}"
   echo "  DESKTOP_SESSION     : ${DESKTOP_SESSION:-<unset>}"
@@ -655,7 +677,6 @@ do_test() {
     echo "  dbus-send           : MISSING (Install: sudo apt install dbus)"
   fi
 
-  # 2. File and Host Integrity
   echo -e "\n[2/5] Checking Files, Manifests, and Integrity..."
   HELPER_BIN="$INSTALL_DIR/helper.py"
   HOST_MANIFEST="$HOST_DIR/tabgroup_helper.json"
@@ -708,7 +729,6 @@ if host and ext:
         print(f"  [ERROR] Extension ID '{ext_id}' not in allowed_extensions: {allowed}")
 PYEOF
 
-  # 3. Compositor D-Bus Connectivity
   echo -e "\n[3/5] Testing Compositor D-Bus API..."
   if dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.GetNameOwner string:org.kde.KWin &>/dev/null; then
     echo "  [OK] org.kde.KWin service active on session bus."
@@ -731,7 +751,6 @@ PYEOF
     echo "  [WARN] Neither KWin nor GNOME Shell responded on the session D-Bus."
   fi
 
-  # 4. Native Messaging Read/Write Test (Non-destructive desktop query)
   echo -e "\n[4/5] Testing Native Helper IPC (Query Only)..."
   python3 - << 'PYEOF'
 import struct, json, subprocess, os, sys
@@ -760,7 +779,6 @@ response = json.loads(stdout[4:4+size].decode('utf-8'))
 print(f"  [OK] Helper response: {response}")
 PYEOF
 
-  # 5. kwinrulesrc State Inspection
   echo -e "\n[5/5] Auditing ~/.config/kwinrulesrc..."
   if [ -f "$KWINRC" ]; then
     python3 - << 'PYEOF'
@@ -795,7 +813,7 @@ PYEOF
 }
 
 do_uninstall() {
-  echo "==> Safely removing Tab Group Integration..."
+  echo "==> Safely removing Tab Group Integration (rr4444/plasma-firefox-sticky-desktops)..."
 
   if [ -f "$KWINRC" ]; then
     echo "==> Cleaning tabgroup-specific rules from kwinrulesrc..."
