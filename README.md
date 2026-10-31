@@ -10,7 +10,7 @@ The bridge exposes internal Firefox tab group states to the display server by pr
 
 ## Architectural Overview
 
-On Wayland, security isolation prevents Firefox from obtaining native compositor window handles (`wl_surface`) or querying other windows. 
+On Wayland, security isolation prevents Firefox from obtaining native compositor window handles (`wl_surface`) or querying other windows.
 
 This project bridges that gap via a three-tier architecture:
 1. **WebExtension Background Service:** Watches active tabs and tab groups via `browser.tabGroups`. Injects a structured `titlePreface` on each window:
@@ -26,6 +26,7 @@ This project bridges that gap via a three-tier architecture:
 
 ## Features
 
+- **Bundled Signed Extension (`.xpi`):** Includes a pre-signed, permanent extension artifact ready for immediate installation in standard release Firefox.
 - **Continuous Multi-Group Tracking:** Window rules match against all tab groups belonging to that window, ensuring placement rules remain active even when background or ungrouped tabs have focus.
 - **Atomic KWin Configuration:** Custom rules are strictly scoped to `[tabgroup_<hash>]` sections. Backups (`kwinrulesrc.bak_tabgroup`) are taken automatically before writes, and non-tabgroup rules are preserved intact.
 - **Zero Daemon Overhead:** No persistent daemon runs in the background. KWin evaluates rules natively, and `helper.py` executes only when invoked by the extension popup.
@@ -39,33 +40,77 @@ This project bridges that gap via a three-tier architecture:
 - Python 3
 - `dbus-send` (package: `dbus` or `dbus-x11`)
 - `curl` or `wget`
+- `zip`
 
 Install dependencies on Debian / Ubuntu / KDE Neon:
 
 ```bash
-sudo apt update && sudo apt install -y python3 dbus curl
+sudo apt update && sudo apt install -y python3 dbus curl zip
 ```
 
 ---
 
-## Installation & Deployment
+## Quick Start (Using Included Signed XPI)
 
-1. Make the setup script executable:
+Because release Firefox requires signed add-ons for permanent installation, this repository provides a pre-signed artifact: `tabgroup-bridge.xpi`.
+
+### 1. Install Native Host & Configuration
 ```bash
-chmod +x ~/apps/tabgroup-extension/tab-group-setup.sh
+chmod +x ./tab-group-setup.sh
+./tab-group-setup.sh --install
 ```
 
-2. Deploy the native messaging host and unpacked extension:
+### 2. Install the Extension
+Install the pre-signed add-on into Firefox:
+- **Direct launch:**
+  ```bash
+  firefox ./tabgroup-bridge.xpi
+  ```
+- **Or Drag-and-Drop:** Open Firefox and drag `tabgroup-bridge.xpi` into any open window.
+- Click **Add** when prompted. The extension is permanently installed and survives browser restarts.
+
+---
+
+## Alternative Installation Options
+
+### Option A: System-Wide Enterprise Policy Deployment
+To enforce installation across all user profiles on the machine without manual browser prompts:
+
 ```bash
-~/apps/tabgroup-extension/tab-group-setup.sh --install
+sudo mkdir -p /etc/firefox/policies
+sudo tee /etc/firefox/policies/policies.json << 'POLICY_EOF'
+{
+  "policies": {
+    "ExtensionSettings": {
+      "tabgroup-helper@local": {
+        "installation_mode": "normal_installed",
+        "install_url": "file:///path/to/tabgroup-bridge.xpi"
+      }
+    }
+  }
+}
+POLICY_EOF
 ```
 
-3. Load the extension in Firefox:
-   - Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
-   - Click **Load Temporary Add-on...**.
-   - Select `~/tabgroup-extension/manifest.json`.
+### Option B: Building and Re-Signing from Source
+If you modify extension source code (`background.js`, `popup.js`, etc.), build and sign a new package:
 
-> **Note on Add-on Persistence:** Temporary add-ons loaded through `about:debugging` unload when Firefox is fully closed. For permanent installation across reboots, run Firefox Developer Edition / Nightly (with `xpinstall.signatures.required` set to `false` in `about:config`) or package the extension using `web-ext` for local self-signing.
+1. Rebuild the `.xpi` package:
+   ```bash
+   cd ~/tabgroup-extension
+   zip -r -FS ~/apps/tabgroup-extension/tabgroup-bridge.xpi manifest.json background.js popup.html popup.js icon.png
+   ```
+
+2. Sign via Mozilla Add-on Developer Hub (https://addons.mozilla.org/developers/):
+   - Choose **On your own (Self-Distribution / Unlisted)**.
+   - Upload `tabgroup-bridge.xpi`.
+   - Download the signed `.xpi` once the automated check passes (2–5 minutes).
+
+### Option C: Temporary Installation (Development Only)
+1. Navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on...**.
+3. Select `~/tabgroup-extension/manifest.json`.
+*(Temporary add-ons unload when Firefox closes).* 
 
 ---
 
@@ -73,7 +118,7 @@ chmod +x ~/apps/tabgroup-extension/tab-group-setup.sh
 
 1. Open the **Tab Group Workspace Bridge** popup from the Firefox toolbar.
 2. The popup displays:
-   - All tab groups located in the active window and their focus state.
+   - All tab groups located in the active window and their focus state (`Focused` vs `Background`).
    - All system virtual desktops detected over D-Bus.
 3. Select a target desktop and click **Move**:
    - The window moves immediately to the target workspace.
@@ -86,7 +131,7 @@ chmod +x ~/apps/tabgroup-extension/tab-group-setup.sh
 Run non-destructive integrity and D-Bus IPC checks at any time:
 
 ```bash
-~/apps/tabgroup-extension/tab-group-setup.sh --test
+./tab-group-setup.sh --test
 ```
 
 The test suite validates:
@@ -103,7 +148,7 @@ The test suite validates:
 To purge the native helper, manifests, unpacked extension files, and strip all generated `tabgroup_*` rules from `~/.config/kwinrulesrc`:
 
 ```bash
-~/apps/tabgroup-extension/tab-group-setup.sh --uninstall
+./tab-group-setup.sh --uninstall
 ```
 
-After execution, remove the temporary add-on from `about:debugging` in Firefox.
+Then remove the extension from `about:addons` in Firefox.
