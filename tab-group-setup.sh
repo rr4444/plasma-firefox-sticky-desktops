@@ -6,8 +6,8 @@ set -euo pipefail
 INSTALL_DIR="$HOME/.local/share/tabgroup-helper"
 HOST_DIR="$HOME/.mozilla/native-messaging-hosts"
 EXT_DIR="$HOME/tabgroup-extension"
-APPS_DIR="$HOME/apps/tabgroup-extension"
-XPI_UNSIGNED="$APPS_DIR/tabgroup-bridge-unsigned-for-amo-signing.xpi"
+XPI_NAME="tabgroup-bridge-unsigned-for-amo-signing.xpi"
+XPI_UNSIGNED="${PWD:-$(pwd)}/$XPI_NAME"
 ADDON_ID="tabgroup-helper@local"
 KWINRC="$HOME/.config/kwinrulesrc"
 ICON_URL="https://kde.org/stuff/clipart/logo/plasma-logo-colorful-128x128.png"
@@ -29,7 +29,7 @@ EOHELP
 
 do_install() {
   echo "==> Deploying Firefox Tab Group Integration..."
-  mkdir -p "$INSTALL_DIR" "$HOST_DIR" "$EXT_DIR" "$APPS_DIR"
+  mkdir -p "$INSTALL_DIR" "$HOST_DIR" "$EXT_DIR"
 
   if [ -f "$KWINRC" ]; then
     echo "==> Checking for legacy integer rules in kwinrulesrc..."
