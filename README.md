@@ -27,11 +27,12 @@ This project bridges that gap via a three-tier architecture:
 ## Features
 
 - **Full Lifecycle & State Tracking:** Tracks window creation (`browser.windows.onCreated`), tab updates, and active tab group changes so titles update immediately upon session restore or new window launch.
+- **Cosmetic Desktop Naming:** Detects and displays virtual desktops using their assigned cosmetic names followed by the desktop number (e.g. `Daily [1]`, `Work [2]`), falling back cleanly if unnamed.
 - **Live Desktop Detection:** Pre-selects whichever virtual desktop the active window currently occupies when opening the extension popup.
 - **Continuous Multi-Group Tracking:** Window rules match against all tab groups belonging to that window, ensuring placement rules remain active even when background or ungrouped tabs have focus.
 - **Atomic KWin Configuration:** Custom rules are strictly scoped to `[tabgroup_<hash>]` sections. Backups (`kwinrulesrc.bak_tabgroup`) are taken automatically before writes, and non-tabgroup rules are preserved intact.
 - **Zero Daemon Overhead:** No persistent daemon runs in the background. KWin evaluates rules natively, and `helper.py` executes only when invoked by the extension popup.
-- **KDE Plasma 5 & 6 Ready:** Auto-detects virtual desktop interfaces across both Plasma 5 and Plasma 6 VirtualDesktopManager architectures.
+- **KDE Plasma 5 & 6 Ready:** Auto-detects virtual desktop interfaces across both Plasma 5 and Plasma 6 VirtualDesktopManager architectures. Writes desktop UUIDs to `kwinrulesrc` on modern Plasma, maintains `[General] Order` and `rules` compatibility, and safely unpins sticky windows on relocation.
 
 ---
 
@@ -70,7 +71,7 @@ This generates `tabgroup-bridge-unsigned-for-amo-signing.xpi` inside the reposit
 3. Select **On your own (Self-Distribution / Unlisted)**.
 4. Upload `tabgroup-bridge-unsigned-for-amo-signing.xpi`.
    - *Note:* The manifest includes `data_collection_permissions: { required: ["none"] }`, satisfying AMO automated review requirements.
-5. When the automated review finishes (typically 2–5 minutes), go to **Manage Status & Versions** -> click version **1.5** -> download the signed `.xpi` file.
+5. When the automated review finishes (typically 2–5 minutes), go to **Manage Status & Versions** -> click version **1.6** (or your latest version) -> download the signed `.xpi` file.
 
 ### 4. Install the Signed XPI into Firefox
 - Open Firefox and drag the downloaded signed `.xpi` into any window, or run:
@@ -86,10 +87,10 @@ This generates `tabgroup-bridge-unsigned-for-amo-signing.xpi` inside the reposit
 1. Open the **Tab Group Workspace Bridge** popup from the Firefox toolbar.
 2. The popup displays:
    - All tab groups located in the active window and their focus state (`Focused` vs `Background`).
-   - All system virtual desktops detected over D-Bus, with the active window's current desktop automatically pre-selected.
+   - All system virtual desktops with their assigned cosmetic names and numbers (e.g. `Daily [1]`, `Work [2]`), with the active window's current desktop automatically pre-selected.
 3. Select a target desktop and click **Move**:
-   - The window moves immediately to the target workspace.
-   - Under KDE Plasma, an entry is written into `~/.config/kwinrulesrc` ensuring the window returns to this desktop upon reopening.
+   - The window moves immediately to the target workspace (and unpins from other desktops if sticky).
+   - Under KDE Plasma, an entry is written into `~/.config/kwinrulesrc` using the desktop's native UUID ensuring the window returns to this desktop upon reopening.
 
 ---
 
@@ -106,7 +107,7 @@ The test suite validates:
 - File paths, permissions, and extension ID manifest pairing.
 - Session bus communication with `org.kde.KWin` / `org.gnome.Shell`.
 - Synthetic Native Messaging request/response loop with `helper.py`.
-- Consistency of the `[General] rules` index inside `~/.config/kwinrulesrc`.
+- Consistency of the `[General] Order` and `rules` index inside `~/.config/kwinrulesrc`.
 
 ---
 
