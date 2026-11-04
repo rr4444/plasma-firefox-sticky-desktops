@@ -54,31 +54,61 @@ sudo apt update && sudo apt install -y python3 dbus curl
 ## Quick Start
 
 ### 1. Install Native Host & Extension Assets
+Deploy the native messaging host and config files:
 ```bash
 ./tab-group-setup.sh --install
 ```
 
-### 2. Package the Unsigned XPI for Signing
-Release Firefox requires add-ons to be digitally signed by Mozilla to install permanently. Generate the unsigned package:
+### 2. Install the Pre-Signed Extension into Firefox
+A pre-signed version of the extension is included directly in this repository. To install permanently in Firefox:
 ```bash
-./tab-group-setup.sh --build
+firefox 8a4c8a1517cb411a83a2-1.6.xpi
 ```
-This generates `tabgroup-bridge-unsigned-for-amo-signing.xpi` inside the repository directory.
+*(Alternatively, drag and drop `8a4c8a1517cb411a83a2-1.6.xpi` into any open Firefox window).*
 
-### 3. Sign the Extension (Mozilla AMO)
-1. Go to the [Mozilla Add-on Developer Hub](https://addons.mozilla.org/developers/).
-2. Click **Submit a New Add-on** (or **New Version** if updating).
-3. Select **On your own (Self-Distribution / Unlisted)**.
-4. Upload `tabgroup-bridge-unsigned-for-amo-signing.xpi`.
-   - *Note:* The manifest includes `data_collection_permissions: { required: ["none"] }`, satisfying AMO automated review requirements.
-5. When the automated review finishes (typically 2–5 minutes), go to **Manage Status & Versions** -> click version **1.6** (or your latest version) -> download the signed `.xpi` file.
+Click **Add** when prompted. The extension is permanently installed and survives browser restarts.
 
-### 4. Install the Signed XPI into Firefox
-- Open Firefox and drag the downloaded signed `.xpi` into any window, or run:
-  ```bash
-  firefox /path/to/downloaded-signed-addon.xpi
-  ```
-- Click **Add** when prompted. The extension is permanently installed and survives browser restarts.
+### 3. Verify System IPC
+Run the non-destructive diagnostic check:
+```bash
+./tab-group-setup.sh --test
+```
+
+---
+
+## Development & Custom Builds
+
+If you modify `background.js`, `popup.js`, or the native helper, follow these steps to test or sign custom builds:
+
+### Instant Live Testing (No Signing Needed)
+1. Open Firefox and navigate to:
+   ```text
+   about:debugging#/runtime/this-firefox
+   ```
+2. Click **Load Temporary Add-on...**
+3. Select `~/tabgroup-extension/manifest.json`.
+4. Changes in `~/tabgroup-extension` can be reloaded instantly with the **Reload** button.
+
+### Packaging & Signing for Permanent Release
+Release builds of Firefox require add-ons to be digitally signed by Mozilla to install permanently:
+
+1. **Package the unsigned archive:**
+   ```bash
+   ./tab-group-setup.sh --build
+   ```
+   This generates `tabgroup-bridge-unsigned-for-amo-signing.xpi` in your current working directory.
+
+2. **Submit to Mozilla AMO:**
+   - Go to the [Mozilla Add-on Developer Hub](https://addons.mozilla.org/developers/).
+   - Click **Submit a New Add-on** (or **New Version** if updating).
+   - Select **On your own (Self-Distribution / Unlisted)**.
+   - Upload `tabgroup-bridge-unsigned-for-amo-signing.xpi`.
+   - When automated review completes (typically 2–3 minutes), go to **Manage Status & Versions**, click the version, and download your signed `.xpi`.
+
+3. **Install the new signed file:**
+   ```bash
+   firefox /path/to/downloaded-signed-addon.xpi
+   ```
 
 ---
 
